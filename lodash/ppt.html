@@ -1,0 +1,356 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>lodash部分api详解</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css">
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+    <style>
+      .module-title {
+        font-size: 30px !important;
+      }
+      .module-header {
+        font-size: 50px !important;
+        margin-bottom: 10px !important;
+      }
+      .module-content {
+        text-align: left;
+      }
+      .code-font-size {
+        font-size: 20px !important;
+      }
+    </style>
+	</head>
+	<body>
+		<div class="reveal">
+      <div class="slides">
+        <section>
+          <div class="module-header">lodash部分api详解</div>
+          <div class="module-content">是一套工具库，它内部封装了诸多对字符串、数组、对象等常见数据类型的处理函数，帮助开发者降低JS使用难度</div>
+          <a href="https://www.lodashjs.com">@see https://www.lodashjs.com</a>
+        </section>
+        <section>
+          <h2>目录</h2>
+          <p class="fragment">一、模块组成</p>
+          <p class="fragment">二、为什么使用lodash</p>
+          <p class="fragment">三、如何使用lodash</p>
+        </section>
+        <section class="module-content">
+          <p class="module-title">- Array，适用数组类型比如填充数据以及查找元素等</p>
+          <p class="module-title">- Collocation，适用对象和数组类型, 部分适用字符串</p>
+          <p class="module-title">- Function， 适用于函数类型，比如节流、延迟、防抖动、设置钩子等操作</p>
+          <p class="module-title">- Lang， 普遍适用于各种类型，常用于执行类型判断和类型转换</p>
+          <p class="module-title">- Math， 使用与数值类型，常用于执行数学运算</p>
+          <p class="module-title">- Object， 适用于对象类型，常用于对象的创建、扩展、类型转换、检索、集合等操作</p>
+          <p class="module-title">- Number， 适用于生成随机数，比较数值与数值区间的关系</p>
+          <p class="module-title">- String， 适用于字符串类型</p>
+          <p class="module-title">- Date， 适用于日期类型</p>
+          <p class="module-title">- Seq， 常用于创建链式调用，提高执行性能（惰性计算）</p>
+        </section>
+        <section>
+          <section>
+            <div>为什么使用lodash</div>
+          </section>
+          <section>
+            <div> 一. 使我们的代码更加易读好看</div>
+            <pre class="code-font-size">
+              <code>
+  var arr = [{ id: 1, name: '小明', age: 20 }, { id: 2, name: '小红', age: 21 }, { id: 3, name: '小黄', age: 16 }]
+  var arr1 = [ ]
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i].age <= 20) {
+      var obj = { ...arr[i], { type: 'child' }}
+      arr1.push(obj)
+    }
+  }
+              </code>
+            </pre>
+            <pre class="code-font-size">
+              <code>
+  var arr = [{ id: 1, name: '小明', age: 20 }, { id: 2, name: '小红', age: 21 }, { id: 3, name: '小黄', age: 16 }]
+  var arr1 = _(arr)
+            .filter((x) => x.age <= 20)
+            .map((x) => { return { ...x, type: 'child' } })
+            .value()
+              </code>
+            </pre>
+          </section>
+          <section>
+            <div> 二. 省去我们对一些异常的处理（eg: value.slice() 和 _.slice()）</div>
+            <pre>
+              <code>
+  function slice(array, start, end) {
+    let length = array == null ? 0 : array.length
+    if (!length) {
+      return []
+    }
+    start = start == null ? 0 : start
+    end = end === undefined ? length : end
+  
+    if (start < 0) {
+      start = -start > length ? 0 : (length + start)
+    }
+    end = end > length ? length : end
+    if (end < 0) {
+      end += length
+    }
+    length = start > end ? 0 : ((end - start) >>> 0)
+    start >>>= 0
+  
+    let index = -1
+    const result = new Array(length)
+    while (++index < length) {
+      result[index] = array[index + start]
+    }
+    return result
+  }
+  
+  export default slice
+              </code>
+            </pre>
+          </section>
+          <section>
+            <div> 三. 能优化性能（使用惰性求值, 将近一半的方法支持一半不支持）</div>
+            <pre>
+              <code>
+  var xs = [{ value: 1 }, { value: 3 }, { value: 6 }, { value: 2 }, { value: 4 }, { value: 8 },  { value: 2 }]
+  function vaild(x) {
+    return function(item, index) {
+      return item.value < x
+    }
+  }
+  
+  function getData () {
+    const data = _(xs)
+                .filter(vaild(3))
+                .take(3)
+                // .value()
+    return data
+  }
+  getData()
+              </code>
+            </pre>
+          </section>
+          <section>
+            <div> 四. 避免了使用某些原生的js api带来的改变原数据的隐患,部分api除外（eg:_.remove, _.reverse)</div>
+            <pre>
+              <code>
+  var xs = [2, 1, 3]
+  xs.sort()
+  console.log(xs)
+  
+  var arr = [2, 1, 3]
+  _.sortBy(arr)
+  console.log(arr)
+              </code>
+            </pre>
+          </section>
+          <section>
+            <div> 五. 避免js已有方法的一些坑</div>
+            <p class="fragment">1. isNaN: 全局方法`isNaN`对于不能转化为数字的情况都会返回`true` `isNaN(undefined)`、`isNaN('a')`, `_.isNaN`则能准确判断</p>
+            <p class="fragment">2. toString: 转换`value`为字符串，但是不能转换`-0, undefined, null`, `_.toString`则没有这种顾虑</p>
+            <p class="fragment">3. 判断两个值是否相等，传统的`a === b` 无法包含所有, `_.eq`能判断所有类型的值包括`NaN`</p>
+          </section>
+        </section>
+        <section>
+          <section>
+            <div>二. 如何使用lodash</div>
+            <pre>
+              <code>
+                npm install lodash
+                import lodash from 'lodash'
+                import assign from 'lodash/assign'(更推荐按需引入)
+              </code>
+            </pre>
+          </section>
+          <section>
+            <p>- lodash常用方法</p>
+            <div>assign, pick, omit, uniq, find, findIndex, clone, cloneDeep, uniqueId, truncat, has, debounce</div>
+          </section>
+          <section>
+            <p class="module-title"> _.assign： 类似于`Object.assign`,但是`Object.assign`在ES5环境无法使用</p>
+            <p class="module-title">参数： 目标对象， 源对象，源对象...， 源对象将自身的属性分配给目标对象，后续的源对象会覆盖之前的源对象</p>
+            <p class="module-title">常用业务场景：查询数据时接口参数会经常根据不同的操作而变化</p>
+            <pre><code>
+              _.assign({ }, query, { name: '李白', age: 18 }, { age: 20 })
+            </code></pre>
+          </section>
+          <section>
+            <p class="module-title"> _.pick： 创建一个从object选中某些属性的对象</p>
+            <p class="module-title">参数： 目标对象， 要挑选属性集合数组</p>
+            <p class="module-title">常用业务场景：新增编辑请求回显时传多个参</p>
+            <pre><code>
+  const extraParam = { stages: 1, dutyStartPeriod, dutyEndPeriod, rabbitRunningTime, flowId }
+  const data = assign({ }, pick(this.taskInfo, ['dutyName', 'typeId', 'fileName', 'duplication', 'cycleMark', 'period', 'radioId']), extraParam)
+
+  const data = {
+    dutyName: this.taskInfo.dutyName,
+    typeId: this.taskInfo.typeId
+    ...
+  }
+            </code></pre>
+          </section>
+          <section>
+            <p class="module-title"> _.omit： 创建一个从object去除某些属性的对象</p>
+            <p class="module-title">参数： 目标对象， 要去除属性集合数组</p>
+            <p class="module-title">常用业务场景：新增编辑请求回显时传多个参</p>
+            <pre><code>
+  var a = { a: 1, b: 2, c: 3, d: 4, c: 5 }
+  _.omit(a, ['b', 'c'])
+  // 常用场景: 转换数据使用[{a: 1, b: 2, c: 3, d: 4}] => [{value: 1, age: 2, c: 3, d: 4}]
+  var data = [{value: 1, name: 'haha', age: 4 }].map((x) => {
+    const item = _.omit(x, ['value', 'name'])
+    item.key = x.value
+    item.title = x.name
+    return item
+  })
+            </code></pre>
+          </section>
+          <section>
+            <p class="module-title"> _.uniq: 数组去重</p>
+            <p class="module-title">常用业务场景：可用于判断数据里面有没有重复的</p>
+            <pre><code>
+              arr.length === _.uniq(arr).length ?
+            </code></pre>
+          </section>
+          <section>
+            <p class="module-title"> _.findIndex: 找到元素对应的索引值</p>
+            <p class="module-title">常用业务场景：可用于在已知元素标识下删除数组内该项</p>
+            <pre><code>
+  var arr = [{ id: 1, name: 'haha' }, { id: 2, name: 'hehe' }, { id: 3, name: 'huhu' }]
+  var item = { id: 2, name: 'hehe' }
+  var index = _.findIndex(arr, item) // var index = _.findIndex(arr, (x) => x.id === item.id)
+  arr.splice(index, 1)
+            </code></pre>
+          </section>
+          <section>
+            <p class="module-title"> _.clone: 拷贝对象时，对于基本数据类型的变量会重新复制一份，而对于引用类型的变量只是对引用进行拷贝，没有对引用指向的对象进行拷贝</p>
+            <p class="module-title">常用业务场景：简单的数据类型进行拷贝时</p>
+            <pre><code>
+  var xs = { name: '哈哈', person: { age: 10, name: 'xiaoming' } }
+  var cloneValue = clone(xs)
+  cloneValue.person.age = 1
+  cloneValue.name = '呵呵'
+  xs.person === cloneValue.person
+  
+  function clone (value) {
+    var newValue
+    if (value && typeof value === 'object') {
+      newValue = _.isArray(value) ? [ ] : { }
+      for (var i in value) {
+        newValue[i] = value[i]
+      }
+      return newValue
+    }
+    newValue = value
+    return newValue
+  }
+            </code></pre>
+          </section>
+          <section>
+            <p class="module-title"> _.cloneDeep: 会递归深度克隆一个对象，拷贝对象时，同时会对引用指向的对象进行拷贝</p>
+            <p class="module-title">常用业务场景：复杂的数据类型进行拷贝时</p>
+            <pre><code>
+  var xs = { name: '哈哈', person: { age: 10, name: 'xiaoming' } }
+  var cloneDeepValue = cloneDeep(xs)
+  xs.person === cloneValue.person
+  cloneValue.person.age = 1
+  cloneValue.name = '呵呵'
+  
+  function cloneDeep (value) {
+    var result
+    if (value && typeof value === 'object') {
+      result = _.isArray(value) ? [ ] : { }
+      for (let key in value) {
+        if (value[key] && typeof value[key] === 'object') {
+          result[key] = cloneDeep(value[key])
+        } else {
+          result[key] = value[key]
+        }
+      }
+      return result
+    }
+    return value
+  }
+            </code></pre>
+          </section>
+          <section>
+            <aside>
+              <div class="module-title">_.uniqueId: 生成独一无二的id</div>
+              <div class="module-title">常用场景：新增列表操作时，设置一点独一无二的id</div>
+            </aside>
+          </section>
+          <section>
+            <div class="module-title">_.truncate: 截取指定长度后默认加...</div>
+            <div class="module-title">常用场景：长数据进行展示时</div>
+          </section>
+          <section>
+            <div class="module-title">_.has: 检查某个属性是否是object对象的直接属性</div>
+            <div class="module-title"> 常用场景：做一些异常情况处理时</div>
+            <pre><code>
+              _.has({a: 1, b: 2}, 'a')
+            </code></pre>
+          </section>
+          <section>
+            <div class="module-title">_.debounce: 防抖动函数</div>
+            <div class="module-title">常用场景：频繁发生的事件，这些事件频繁发生，从而会频繁的操作`dom`,进行资源加载等，可能会导致浏览器崩溃等情况，比如下拉选框的搜索事件，屏幕的滚动事件，拖拽时的`mousemove`事件</div>
+            <pre><code>
+              _.debounce(function, time)
+            </code></pre>
+          </section>
+        </section>
+        <section>
+          <h4> 五、交流环节</h4>
+        </section>
+      </div>
+    </div>
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+		<script>
+		    Reveal.initialize({
+			// 是否在右下角展示控制条
+			controls: true,
+			// 是否显示演示的进度条
+		    progress: true,
+
+		    // 是否显示当前幻灯片的页数
+		    slideNumber: 'c/t',
+
+		    // 是否启用键盘快捷键来导航
+		    keyboard: true,
+
+		    // 是否启用幻灯片的概览模式,开启后，可以使用ESC键查看幻灯片概览
+		    overview: true,
+
+		    // 是否将幻灯片垂直居中
+		    center: true,
+
+		    // 全局开启和关闭碎片
+		    fragments: true,
+
+		    // 切换过渡效果
+		    transition: 'default', // none/fade/slide/convex/concave/zoom
+
+		    // 过渡速度
+		    transitionSpeed: 'default', // default/fast/slow
+
+		    // 全屏幻灯片背景的过渡效果
+		    backgroundTransition: 'default', // none/fade/slide/convex/concave/zoom
+
+		    //演讲者笔记对听众可见
+		    showNotes: false,
+
+		    dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+		});
+		</script>
+	</body>
+</html>
