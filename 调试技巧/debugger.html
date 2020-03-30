@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>测试</title>
+</head>
+<body>
+  <!-- 打断点调试 -->
+  <label for="num1"></label>
+  <input id="num1" />
+  <label for="num2"></label>
+  <input id="num2" />
+  <button class="add">add</button>
+  <p></p>
+  <!-- 测试dom节点断点 -->
+  <p>
+    <span class="test">测试</span>
+    <button onclick="deleteDom()">删除</button>
+    <span id="fake">Fake</span>
+  </p>
+  <p>
+    <button onclick="init()">开始绑定</button>
+    <button onclick="destroy()">结束绑定</button>
+    <button onclick="startTime()">开始定时器</button>
+    <button onclick="endTime()">结束定时器</button>
+    <button onclick="transfrom()">转换</button>
+  </p>
+</body>
+<script>
+  var $input = document.querySelectorAll('input')
+  var $label = document.querySelector('p')
+  var $button = document.querySelector('.add')
+  var $test = document.querySelector('.test')
+  var $time = document.querySelector('.time-show')
+
+  function sim () {
+    return new Array(10000).fill({})
+  }
+
+  let lifecycle = {
+    bigArray: [],
+    init () {
+      this.bigArray.push(sim())
+    },
+    destroy () {
+      this.bigArray = []
+    }
+  }
+
+  function memoryLeakHandlerGen () {
+    const lifecycle$ = lifecycle
+
+    return function () {
+      console.log(lifecycle$)
+    }
+  }
+
+  var memoryLeakHandler = memoryLeakHandlerGen()
+
+  function init () {
+    lifecycle.init()
+    document.querySelector('#fake').addEventListener('click', memoryLeakHandler)
+
+
+  // dom节点
+  //   var $span = document.createElement('span')
+  //   document.querySelector('#fake').parentNode.append($span)
+  }
+
+
+  // 事件监听解绑
+  function destroy () {
+    const $fake = document.querySelector('#fake')
+    // 事件解绑
+    $fake.removeEventListener('click', memoryLeakHandler)
+    $fake.parentNode.remove($fake)
+    lifecycle = null
+    memoryLeakHandler = null
+  }
+
+  // 定时器
+  var someResource = []
+  var timer = null
+
+  function startTime () {
+    timer = setInterval(function() {
+      someResource.push(sim())
+    }, 1000)
+  }
+
+  function endTime () {
+    someResource = []
+    // clearInterval(timer)
+    timer = null
+  }
+
+  $button.addEventListener('click', function () {
+    var num1 = $input[0].value
+    var num2 = $input[1].value
+    var sum = num1 + num2
+    $label.textContent = num1 + ' + ' + num2 + ' = ' + sum
+  })
+  function deleteDom () {
+    $test.parentNode.removeChild($test)
+  }
+
+
+var trees = {
+  'head': {
+    'prov': '1001',
+    'version': '1.0',
+     'age': null
+  },
+  'elements': [{
+    'rating': 0,
+    'name': '合肥',
+    'location': {
+      'lat': 34.685087,
+      'lng': 135.805
+    },
+    'has_experience': false
+  },
+  {
+    'rating': 0,
+    'name': '北京',
+    'location': {
+      'lat': 43.190717,
+      'lng': 140.994662
+    },
+    'has_experience': false
+  }]
+}
+
+
+function isArray (value) {
+  return Object.prototype.toString.call(value)=='[object Array]'
+}
+function isNull (value) {
+  return Object.prototype.toString.call(value)=='[object Null]'
+}
+function isObject (value) {
+  return Object.prototype.toString.call(value)=='[object Object]'
+}
+function isBoolean (value) {
+  return typeof value === 'boolean'
+}
+function toString (value) {
+ return '' + value
+}
+function cloneDeep (value) {
+  var result
+  if (value instanceof Date) {
+    result = new Date()
+    result.setTime(value.getTime())
+    return result
+  }
+  if (value && typeof value === 'object') {
+    result = isArray(value) ? [ ] : { }
+    for (let key in value) {
+      if (value[key] && typeof value[key] === 'object') {
+        result[key] = cloneDeep(value[key])
+      } else {
+        result[key] = value[key]
+      }
+    }
+    return result
+  }
+  return value
+}
+
+
+function transformArrayToObject (xs, keyTransformer) {
+  return xs.reduce((acc, x, index) => {
+    const key = keyTransformer(index, x, xs)
+    acc[key] = x
+    return acc
+  }, { })
+}
+
+function transformJSONData (data) {
+  return Object.keys(data).map(mapFn)
+
+  function mapFn (k) {
+    const v = data[k]
+    let hasValue = true
+    let children = [ ]
+    let dataType = typeof v
+    // 会存在的数据类型 Null, Object, Array, Boolean, String, 当值为数组或对象时会进行再次拆分
+    if (isNull(v)) {
+      hasValue = false
+      dataType = 'null'
+    } else if (isArray(v)) {
+      hasValue = false
+      dataType = 'array'
+      // 将数组内每一项变成键值对 [{a: 1}, {b: 2}] => {key1: {a: 1}, key2: {b: 2}}
+      const dataObj = transformArrayToObject(v, (index) => `${k}[${index}]`)
+      children = transformJSONData(dataObj)
+    } else if (isObject(v)) {
+      hasValue = false
+      dataType = 'object'
+      children = transformJSONData(v)
+    }
+    const placeholder = hasValue ? (isBoolean(v) ? toString(v) : v) : ''
+    return {
+      name: k,
+      type: dataType,
+      hasValue,
+      useVariable: false,
+      vars: [ ],
+      value: '',
+      placeholder,
+      children
+    }
+  }
+}
+
+function walkGen (processItemFn) {
+  return function walk (treeData) {
+    return treeData.map((x) => {
+      x = cloneDeep(x)
+
+      processItemFn(x)
+      if (x.children.length !== 0) {
+        x.children = walk(x.children)
+      }
+
+      return x
+    })
+  }
+}
+
+var addScopedSlots = walkGen(function processItemFn (x) {
+  x.scopedSlots = { title: 'title', icon: 'menu' }
+})
+
+function transfrom () {
+  console.log(trees, addScopedSlots(transformJSONData(trees)))
+}
+
+</script>
+</html>
